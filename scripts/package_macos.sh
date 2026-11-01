@@ -88,5 +88,18 @@ cp scripts/macos-first-open.txt "$STAGE/请先阅读.txt"
 
 DMG="dist/XinyaoPDFEditor-macos-${ARCH}.dmg"
 rm -f "$DMG"
-hdiutil create -volname "$APP_NAME" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+sync
+# 打包机上 hdiutil 偶尔会报 Resource busy，多试几次。
+for attempt in 1 2 3 4 5; do
+  if hdiutil create -volname "$APP_NAME" -srcfolder "$STAGE" -ov -format UDZO "$DMG"; then
+    break
+  fi
+  echo "制作磁盘映像失败，第 ${attempt} 次，稍后再试。"
+  hdiutil detach "/Volumes/${APP_NAME}" >/dev/null 2>&1 || true
+  rm -f "$DMG"
+  if [[ "$attempt" -eq 5 ]]; then
+    exit 1
+  fi
+  sleep $((attempt * 4))
+done
 echo "已生成 ${DMG}"

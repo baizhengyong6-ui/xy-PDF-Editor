@@ -32,8 +32,10 @@ python -m PyInstaller --noconfirm --clean --windowed --onedir \
   --icon "$ICON_DIR/AppIcon.icns" \
   --osx-bundle-identifier com.xinyao.pdfeditor \
   --collect-all pymupdf \
-  --collect-all PySide6 \
   --collect-all PIL \
+  --hidden-import PySide6.QtCore \
+  --hidden-import PySide6.QtGui \
+  --hidden-import PySide6.QtWidgets \
   main.py
 
 APP="dist/${APP_NAME}.app"
@@ -67,8 +69,10 @@ CFBundleDisplayName = "鑫垚设计PDF编辑器";
 CFBundleName = "鑫垚设计PDF编辑器";
 EOF
 
+# Qt Assistant 等附带程序在打包后会留下符号链接环，深度签名会报 Too many levels of symbolic links。
+find "$APP" -name '*__dot__app' -prune -exec rm -rf {} +
 # 临时签名，方便在打包机上做自检。下载后仍会被 Gatekeeper 拦截，需要用户手动打开。
-codesign --force --deep --sign - "$APP"
+codesign --force --sign - --deep "$APP"
 
 BIN="${APP}/Contents/MacOS/${APP_NAME}"
 if [[ ! -x "$BIN" ]]; then

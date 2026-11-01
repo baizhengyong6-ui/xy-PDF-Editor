@@ -1,0 +1,15 @@
+[project]
+name = "xinyao-pdf-editor"
+version = "1.0.0"
+description = "鑫垚设计PDF编辑器"
+requires-python = ">=3.11"
+dependencies = [
+    "pymupdf==1.28.2",
+    "PySide6==6.12.0",
+    "pillow==13.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

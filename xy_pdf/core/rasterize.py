@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from xy_pdf.core.errors import PdfError
 
+# 固定索引的字体。Noto 的第 3 个面（index 2）是简体中文。
 FONT_CANDIDATES = (
     (os.environ.get("XINYAO_CJK_FONT") or "", 0),
     (r"C:\Windows\Fonts\msyh.ttc", 0),
@@ -21,14 +22,48 @@ FONT_CANDIDATES = (
     (r"C:\Windows\Fonts\simhei.ttf", 0),
     ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 2),
     ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 0),
+    ("/System/Library/Fonts/Hiragino Sans GB.ttc", 0),
+    ("/System/Library/Fonts/STHeiti Medium.ttc", 0),
+    ("/Library/Fonts/Arial Unicode.ttf", 0),
 )
+
+# 苹方等字体集里简体面的序号不固定，打开时逐个试。
+MACOS_FONT_COLLECTIONS = (
+    "/System/Library/Fonts/PingFang.ttc",
+    "/System/Library/Fonts/Supplemental/Songti.ttc",
+    "/System/Library/Fonts/Supplemental/Songti SC.ttc",
+)
+
+_FONT_CACHE: tuple[str, int] | None = None
+_FONT_LOOKED_UP = False
 
 
 def find_cjk_font() -> tuple[str, int] | None:
+    global _FONT_CACHE, _FONT_LOOKED_UP
+    if _FONT_LOOKED_UP:
+        return _FONT_CACHE
+    _FONT_LOOKED_UP = True
     for path, index in FONT_CANDIDATES:
-        if path and os.path.isfile(path):
-            return path, index
+        if path and os.path.isfile(path) and _supports_chinese(path, index):
+            _FONT_CACHE = (path, index)
+            return _FONT_CACHE
+    for path in MACOS_FONT_COLLECTIONS:
+        if not os.path.isfile(path):
+            continue
+        for index in range(32):
+            if _supports_chinese(path, index):
+                _FONT_CACHE = (path, index)
+                return _FONT_CACHE
     return None
+
+
+def _supports_chinese(path: str, index: int) -> bool:
+    try:
+        font = ImageFont.truetype(path, 48, index=index)
+        box = font.getbbox("鑫")
+    except Exception:
+        return False
+    return box[2] - box[0] >= 10
 
 
 def render_textbox_png(text: str, width_pt: float, height_pt: float, fontsize: float, color, fill, scale: float = 3.0) -> bytes:

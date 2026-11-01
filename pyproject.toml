@@ -1,6 +1,6 @@
 [project]
 name = "xinyao-pdf-editor"
-version = "1.0.0"
+version = "1.1.0"
 description = "鑫垚设计PDF编辑器"
 requires-python = ">=3.11"
 dependencies = [

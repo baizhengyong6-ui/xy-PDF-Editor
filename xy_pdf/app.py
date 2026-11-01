@@ -2,11 +2,27 @@
 
 from __future__ import annotations
 
+import os
 import sys
+
+
+def _prefer_chinese_locale(app) -> None:
+    """让 Qt 自带的对话框用简体中文。macOS 系统文件窗口仍跟随系统语言。"""
+    from PySide6.QtCore import QLibraryInfo, QLocale, QTranslator
+
+    QLocale.setDefault(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+    translator = QTranslator(app)
+    translations = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    if translator.load("qtbase_zh_CN", translations):
+        app.installTranslator(translator)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv if argv is None else argv)
+    if sys.platform == "darwin":
+        os.environ.setdefault("LANG", "zh_CN.UTF-8")
+        os.environ.setdefault("QT_MAC_WANTS_LAYER", "1")
+
     if "--self-check" in args:
         import pymupdf
         from PySide6.QtWidgets import QApplication
@@ -32,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
 
     app = QApplication(args)
     app.setApplicationName(APP_NAME)
+    app.setApplicationDisplayName(APP_NAME)
+    _prefer_chinese_locale(app)
     apply_theme(app)
     window = MainWindow()
     window.show()

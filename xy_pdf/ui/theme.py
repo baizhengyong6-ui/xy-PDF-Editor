@@ -1,8 +1,24 @@
 """界面样式。偏图纸纸色和墨蓝色，方便长时间看图。"""
 
+import sys
+
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
+
+
+def ui_font_families() -> list[str]:
+    if sys.platform == "darwin":
+        # 苹方是 macOS 自带的简体中文界面字体。
+        return ["PingFang SC", "Hiragino Sans GB", "Songti SC", "Heiti SC", "Noto Sans CJK SC", "sans-serif"]
+    return [
+        "Noto Sans CJK SC",
+        "Noto Sans SC",
+        "Microsoft YaHei",
+        "PingFang SC",
+        "Source Han Sans SC",
+        "sans-serif",
+    ]
 
 STYLESHEET = """
 QMainWindow, QDialog, QWidget {
@@ -120,16 +136,7 @@ QSlider::handle:horizontal {
 def apply_theme(app: QApplication) -> None:
     app.setStyle("Fusion")
     font = QFont()
-    font.setFamilies(
-        [
-            "Noto Sans CJK SC",
-            "Noto Sans SC",
-            "Microsoft YaHei",
-            "PingFang SC",
-            "Source Han Sans SC",
-            "sans-serif",
-        ]
-    )
+    font.setFamilies(ui_font_families())
     font.setPointSize(10)
     app.setFont(font)
     app.setStyleSheet(STYLESHEET)
@@ -146,7 +153,7 @@ def make_app_icon() -> QIcon:
     painter.drawEllipse(3, 3, 58, 58)
     painter.setPen(QColor("#f7ecc4"))
     glyph = QFont()
-    glyph.setFamilies(["Noto Sans CJK SC", "Microsoft YaHei", "sans-serif"])
+    glyph.setFamilies(ui_font_families())
     glyph.setPixelSize(28)
     glyph.setBold(True)
     painter.setFont(glyph)

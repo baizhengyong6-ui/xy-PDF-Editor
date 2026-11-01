@@ -59,15 +59,38 @@
 
 ## 下载与安装
 
-发布标签（例如 `v1.0.0`）推上去之后，GitHub Actions 会在 Windows 上跑测试、打出一个便携版 `XinyaoPDFEditor.exe`，并挂到该标签的 Release 上。
+发布标签（例如 `v1.1.0`）推上去之后，GitHub Actions 会跑测试，并打出三个文件挂到该标签的 Release 上：
 
-1. 打开本仓库的 Releases。
-2. 下载 `XinyaoPDFEditor.exe`。不需要单独安装 Python。
-3. 双击运行。窗口标题是「鑫垚设计PDF编辑器」。
+| 文件 | 系统 |
+| --- | --- |
+| `XinyaoPDFEditor.exe` | Windows 64 位 |
+| `XinyaoPDFEditor-macos-arm64.dmg` | Mac，Apple 芯片（M 系列） |
+| `XinyaoPDFEditor-macos-x86_64.dmg` | Mac，Intel 芯片 |
+
+不确定 Mac 是哪种芯片时，点左上角苹果菜单 →「关于本机」。芯片一栏写 Apple 就下 arm64，写 Intel 就下 x86_64。
+
+### Windows
+
+1. 下载 `XinyaoPDFEditor.exe`。不需要单独安装 Python。
+2. 双击运行。窗口标题是「鑫垚设计PDF编辑器」。
 
 没有杀毒软件误报时，不用安装，拷到任意文件夹就能用。第一次启动会解压临时文件，稍等几秒。
 
-也可以在 Actions 里手动运行「Windows 构建」，从构建产物里下载 exe。拉取请求上的构建同样会上传产物，但不会新建 Release。
+### macOS
+
+1. 下载对应芯片的 dmg，双击打开。
+2. 把「鑫垚设计PDF编辑器」拖到「应用程序」文件夹。磁盘映像里的「请先阅读」有同样的说明。
+3. 这个应用没有 Apple 开发者签名，也没有公证。从网络下载后，第一次打开常会提示「无法打开」或「已损坏」。任选一种办法：
+   - 在 Finder 里按住 Control 键点按「鑫垚设计PDF编辑器」，选择「打开」，然后在对话框里再点「打开」。
+   - 或者打开「终端」，执行（应用如果不在「应用程序」里，把路径改成实际位置）：
+
+```bash
+xattr -cr "/Applications/鑫垚设计PDF编辑器.app"
+```
+
+打开和保存文件时用的是 macOS 自己的文件窗口。系统语言是简体中文时，这些窗口也是中文。程序菜单和按钮始终是简体中文，文字使用系统自带的苹方。
+
+也可以在 Actions 里手动运行「构建与发布」，从构建产物里下载安装包。拉取请求上的构建同样会上传产物，但不会新建 Release。
 
 ## 使用说明
 
@@ -104,7 +127,17 @@ pyinstaller --noconfirm --clean --windowed --onefile --name XinyaoPDFEditor --ic
 
 生成的文件是 `dist\XinyaoPDFEditor.exe`。
 
-Linux 或 macOS 上也可以 `python main.py` 运行界面，自动化发布只做了 Windows exe。
+在 Mac 上从源码运行或打包：
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+python main.py
+bash scripts/package_macos.sh
+```
+
+`scripts/package_macos.sh` 会按当前芯片生成 `dist/XinyaoPDFEditor-macos-arm64.dmg` 或 `dist/XinyaoPDFEditor-macos-x86_64.dmg`。映像里的应用名字是「鑫垚设计PDF编辑器」。Linux 上也可以 `python main.py` 运行界面，发布包只做 Windows 和 macOS。
 
 ## 测试
 
@@ -126,6 +159,8 @@ pytest
 - 不支持加密 PDF，也不做电子签章证书。
 - 页面删掉或重排之后，书签会按新页码尽量保留，复杂跳转可能变成只跳到那一页。
 - 撤销栈最多大约 8 步，并且跳过特别大的文件。
+- macOS 安装包没有 Apple 签名和公证，需要按上面的方法手动打开。需要 macOS 14 或更新的系统。没有做成同时包含两种芯片的通用包，因为 PyMuPDF 的安装包是按芯片分开的，PySide6 虽有通用包，合在一起仍要分两次编译。
+- Mac 上的打开、保存窗口跟随系统语言。系统不是简体中文时，这些窗口可能是英文，程序自己的界面仍是简体中文。
 
 ## 目录
 
@@ -134,5 +169,6 @@ main.py                 启动
 xy_pdf/core             合并、拆分、文字、公章、骑缝章
 xy_pdf/ui               简体中文界面
 tests                   pytest
-.github/workflows       Windows 测试与打包
+.github/workflows       Windows 与 macOS 测试、打包和发布
+scripts/package_macos.sh  打出 macOS 磁盘映像
 ```
